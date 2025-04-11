@@ -2,6 +2,7 @@ from flask import Flask, request, jsonify
 import requests
 from io import BytesIO
 import PyPDF2
+import os
 
 app = Flask(__name__)
 
@@ -62,5 +63,8 @@ def analyze_text():
         return jsonify({"error": "Failed to send data to external API."}), 500
 
 
+
+
 if __name__ == "__main__":
-    app.run(debug=False)
+    port = int(os.environ.get("PORT", 5000))  # Use PORT from environment or fallback to 5000
+    app.run(host="0.0.0.0", port=port, debug=False)
