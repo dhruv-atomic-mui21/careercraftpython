@@ -6,13 +6,17 @@ import PyPDF2
 app = Flask(__name__)
 
 EXTERNAL_API_URL = "https://magicloops.dev/api/loop/fe2ef75f-80fa-4d1c-82a6-ca4ebf4089a6/run"
-PDF_URL = "https://res.cloudinary.com/dwhovyplx/raw/upload/v1744400084/resumes/pygtiezg3ndz1hiwc74r"
 
 @app.route("/get-text", methods=["GET"])
 def fetch_pdf_and_send_to_api():
+    # Get PDF URL from query param
+    pdf_url = request.args.get("pdf_url")
+    if not pdf_url:
+        return jsonify({"error": "Missing 'pdf_url' query parameter."}), 400
+
     try:
         # Step 1: Download PDF
-        response = requests.get(PDF_URL)
+        response = requests.get(pdf_url)
         response.raise_for_status()
 
         # Step 2: Extract text from PDF
@@ -26,19 +30,18 @@ def fetch_pdf_and_send_to_api():
                 text_content += page_text + "\n"
 
         if not text_content.strip():
-            return "No text could be extracted from the PDF.", 400
+            return jsonify({"error": "No text could be extracted from the PDF."}), 400
 
         # Step 3: Send extracted text to Magic Loops API
         api_response = requests.post(EXTERNAL_API_URL, json={"input": text_content})
         api_response.raise_for_status()
 
         # Step 4: Return Magic Loops response
-        result = api_response.json()
-        return jsonify(result)
+        return jsonify(api_response.json())
 
     except requests.RequestException as e:
         print("Error:", e)
-        return jsonify({"error": "Something went wrong during the request."}), 500
+        return jsonify({"error": "Something went wrong while fetching or sending data."}), 500
 
 
 @app.route("/analyze-text", methods=["POST"])
